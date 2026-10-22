@@ -1,0 +1,31 @@
+# Control catalog: each automated check maps to a framework control.
+# Test once, comply many.
+checks:
+  - id: GH-01
+    title: Default branch is protected
+    description: The main branch has protected rules, so changes cannot be pushed directly without control.
+    severity: high
+    frameworks:
+      nist_800_53: [CM-3, CM-5]
+      soc2: [CC8.1]
+  - id: GH-02
+    title: Pull requests require review
+    description: All pull requests must be reviewed by at least one other person before merging.
+    severity: medium
+    frameworks:
+      nist_800_53: [CM-3, SA-10]
+      soc2: [CC8.1]
+  - id: GH-03
+    title: Secret scanning is enabled
+    description: Secret scanning is enabled to detect exposed credentials in sensitive code and configuration files
+    severity: high
+    frameworks:
+      nist_800_53: [IA-5, SI-4]
+      soc2: [CC6.1]
+  - id: GH-04
+    title: Dependabot security updates are enabled
+    description: Dependabot security updates open a pull request to upgrade a vulnerable dependency to the minimum version that fixes it.
+    severity: high
+    frameworks:
+      nist_800_53: [RA-5, SI-2, SI-5]
+      soc2: [CC7.1]
