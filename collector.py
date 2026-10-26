@@ -42,6 +42,42 @@ def check_branch_protected(headers, repo, branch):
     return "error", f"Unexpected response {response.status_code}; could not verify."
 
 
+def check_pr_reviews_required(headers, repo, branch):
+    """GH-02: Do pull requests need at least one approving review?
+
+    Returns (status, detail). Status is "pass", "fail", or "error".
+    """
+    url = f"{API}/repos/{repo}/branches/{branch}/protection"
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+    except requests.RequestException as exc:
+        return "error", f"Could not reach GitHub ({type(exc).__name__}); could not verify."
+
+    if response.status_code == 404:
+        return "fail", "No branch protection, so reviews are not required."
+    if response.status_code != 200:
+        return "error", f"Unexpected response {response.status_code}; could not verify."
+
+    protection = response.json()
+    reviews = protection.get("required_pull_request_reviews")
+
+    if not reviews:
+        return "fail", "No review required."
+    if reviews["required_approving_review_count"] == 0:
+        return "fail", "Pull requests do not require any reviews."
+    return "pass", f"{reviews['required_approving_review_count']} approving review(s) required before merging."
+
+
+def print_result(check_id, catalog, status, detail):
+    """Print one check result with its mapped controls."""
+    check = catalog[check_id]
+    frameworks = check["frameworks"]
+    controls = ", ".join(frameworks["nist_800_53"] + frameworks["soc2"])
+    print(f"[{status.upper()}] {check_id} {check['title']}")
+    print(f"       {detail}")
+    print(f"       Controls: {controls}")
+
+
 def main():
     headers = {
         "Authorization": f"Bearer {load_token()}",
@@ -59,14 +95,11 @@ def main():
 
     status, detail = check_branch_protected(headers, REPO, branch)
 
-    check = catalog["GH-01"]
-    frameworks = check["frameworks"]
-    controls = ", ".join(frameworks["nist_800_53"] + frameworks["soc2"])
+    print_result("GH-01", catalog, status, detail)
 
-    print(f"[{status.upper()}] GH-01 {check['title']}")
-    print(f"       {detail}")
-    print(f"       Controls: {controls}")
+    status, detail = check_pr_reviews_required(headers, REPO, branch)
 
+    print_result("GH-02", catalog, status, detail)
 
 if __name__ == "__main__":
     main()
