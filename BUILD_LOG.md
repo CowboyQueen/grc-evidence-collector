@@ -96,8 +96,8 @@ A network drop (DNS failure, then a timeout), fixed with wsl --shutdown
 The virtual environment wasn’t active after the restart; it worked only because Ubuntu has its own copies of the libraries
 
 # Step 10: Report errors instead of crashing— 10-26-2026
-**Goal** 
-**What I did:** 
-**What I learned:** 
-**GRC connection:** 
-**Obstacle:** 
+**Goal** To report the error instead of simply crashing. 
+**What I did:** wrapped API calls in try/except, simulated a network failure with a .invalid address, confirmed ERROR, restored the address, and confirmed PASS
+**What I learned:**  try/except; RequestException catches all network erros from requests; why repo lookup stops the script while the check returns "error"
+**GRC connection:** every run leaves evidence when it can't check (AU-5), testing a safeguard instead of trusting it (CA-2)
+**Obstacle:** No obstacles experienced
