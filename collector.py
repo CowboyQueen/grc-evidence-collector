@@ -31,7 +31,10 @@ def check_branch_protected(headers, repo, branch):
     Returns (status, detail). Status is "pass", "fail", or "error".
     """
     url = f"{API}/repos/{repo}/branches/{branch}/protection"
-    response = requests.get(url, headers=headers, timeout=30)
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+    except requests.RequestException as exc:
+        return "error", f"Could not reach GitHub ({type(exc).__name__}); could not verify."
     if response.status_code == 200:
         return "pass", f"Branch '{branch}' has protection rules."
     if response.status_code == 404:
@@ -46,7 +49,10 @@ def main():
     }
     catalog = load_catalog()
 
-    response = requests.get(f"{API}/repos/{REPO}", headers=headers, timeout=30)  
+    try:
+        response = requests.get(f"{API}/repos/{REPO}", headers=headers, timeout=30) 
+    except requests.RequestException as exc:
+        raise SystemExit(f"Could not reach GitHub ({type(exc).__name__}).")  
     if response.status_code != 200:
         raise SystemExit(f"Could not read {REPO} (status {response.status_code}).")
     branch = response.json()["default_branch"]
