@@ -77,3 +77,27 @@ AU-9 (Protection of Audit Info) Commit IDs are content hashes so if altered, IDs
 **What I learned:** What an API is in action, status codes (200,401,404), and how to check and store secrets and to never have them inside the code
 **GRC connection:** AC-6 (Least Privilege), IA-5 (rotation via expiry), preventitive controls on secrets(ignored before creation), and verifying with {git check-ignore} rather than assuming
 **Obstacle:** Had a stray space in original check on [collector.py] without saving. Changes made and saved
+
+# Step 9: First real control check, GH-01 — 10-23-2026
+**Goal** My first automated control checkand prove it can detect a real gap
+**What I did:** added load_catalog() so the script reads controls.yaml; catalog now drives the output, wrote check_branch_ptoected() which asks the GitHUb API about the [main] branch and turns into pass (200) /fail (404) /error (403)
+-Ran it[FAIL]-added a classic branch protection rule on GitHub- ran it again [PASS]
+Committed: Add GH-01 branch protection checked mapped to CM-3, CM-5, CC8.1
+**What I learned:** How to read a traceback bottom-up: the last line says what went wrong, the line above says where. Scope: variables created inside a fuction only exist inside it In [module] vs [main] in a tracebackshows where code is running
+Reviewing the whole file finds serveral errors at once, vs debugging them one by one.  [git diff] shows exactly what changed and q exits the pager
+Branch protection with no boxes checked still blocks force pushes and deleting the branch, but allows norm pushes
+**GRC connection:** Detect-> remediate->verify-the full control cycle. Can't verify = error, never pass (fail-safe design). A check you've never seen fail hasn't proven anything.  GH-01 provides eveidence for CM-3, CM-5 and SOC2 CC8.1. Protected means the audit trail can't be quietly rewritten
+**Obstacle:** IndentationError on def load_catalog() (stray spaces)
+An extra quote: "unterminated string literal"
+catalog ["checks]"], a bracket inside the quotes, causing a KeyError
+The main() body wasn’t indented, causing NameError: headers is not defined (scope)
+Typos caught by review: framworks, .json instead of .join, and import requests twice with import os missing
+A network drop (DNS failure, then a timeout), fixed with wsl --shutdown
+The virtual environment wasn’t active after the restart; it worked only because Ubuntu has its own copies of the libraries
+
+# Step 10: Report errors instead of crashing— 10-26-2026
+**Goal** 
+**What I did:** 
+**What I learned:** 
+**GRC connection:** 
+**Obstacle:** 
