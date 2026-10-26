@@ -73,7 +73,7 @@ AU-9 (Protection of Audit Info) Commit IDs are content hashes so if altered, IDs
 
 # Step 8: First call to the GitHub API — 10-22-2026
 **Goal** Creating the code that walks through the catalog
-**What I did:** Made sure secrets cannot be committed (before creating any),
-**What I learned:** 
-**GRC connection:** 
-**Obstacle:** 
+**What I did:** Made sure secrets cannot be committed (before creating any),create a fine-grained, read-only 90-day token, and dtored it in an ignored [.env]; made first authenticated API call
+**What I learned:** What an API is in action, status codes (200,401,404), and how to check and store secrets and to never have them inside the code
+**GRC connection:** AC-6 (Least Privilege), IA-5 (rotation via expiry), preventitive controls on secrets(ignored before creation), and verifying with {git check-ignore} rather than assuming
+**Obstacle:** Had a stray space in original check on [collector.py] without saving. Changes made and saved
