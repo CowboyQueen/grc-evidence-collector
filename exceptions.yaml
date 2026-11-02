@@ -1,0 +1,20 @@
+# Risk exceptions: findings that are accepted rather than fixed,
+# with the reason, compensating controls, owner and review date.
+
+exceptions:
+  - id: EXC-001
+    check_id: GH-02
+    status: accepted
+    scope: Independent approval of pull requests themselves is not enforced.
+    risk: Mistakes, insecure code, or unintended changes could reach main without independent review
+    justification: Solo project; GitHub does not allow for self-approval
+    compensating_controls:
+      - Branch protection requires a pull request for every change made to main, with no admin bypass.
+      - Structured self-review and includes a description of what changed, why, and how it is tested.
+      - Force pushes and deletion of main are blocked, so all changes stay in the history and can be traced and reverted if needed.
+    residual_risk: Low; no production users and every change is traceable and reversible
+    remediation_plan: Adding a reviewer to the pull request, and updating from 0 approvers to at least 1 outside of self.
+    owner: CowboyQueen
+    approved_by: CowboyQueen (project owner; self-approved)
+    created: 2026-11-02
+    review_by: 2027-01-31
