@@ -118,3 +118,14 @@ My tool caught drift: GitHub set 1 required approval automatically. GH-02 report
 **GRC connection:** CM-3, the full change-control lifecycle: proposed-> reviewed-> merged, with a record. AC-5, separation of duties: why a second account would be a control override, not a control. Risk acceptance: scope, risk , justification, compensating controls, residual risk, owner, review date, remediation plan shows proper documentation inside an exception. A PASS describes configuration not whether the control works. Tested all 3 paths of GH-02 against a real system
 
 **Obstacle:** Bracket/Parenthesis mix-ups on [protection]. GH-02 not printing because its lines were missing from main() function. Accidentally deleted code, recovered with Ctrl+Z/Timeline, GitHub auto-setting 1 approval
+
+## Step 12: GH-03 secret scanning is enabled — 11-5-2026
+**Goal:** To check whether secret scanning is enabled- leaked credentials, whether API keys, tokens or passwords, committed by accident are one of the most common causes of a real breach. Secret scanning watches for them.
+
+**What I did:** Wrote most of GH-03 myself; reused the repo info instead of making another API call. Test failure paths with fake data
+
+**What I learned:** gaining on my understanding of navigating nested data one level at a time. A key versus its value (`"status" vs "enabled"`). `if __name__ == "__main__":` makes functions importable and testable as well as unit testing with controlled inputs
+
+**GRC connection:** Controls: IA-5, SI-4, CC6.1. Missing data is ERROR, not FAIL or PASS. A check that can never pass is broken too. Failure paths must be tested, but never by weakening controls. Use fake data instead.
+
+**Obstacle:** `"enabled"` used as a key. Leftover API text in `.get()`. Stepping down too many levels and `print_result()` lost while editing. Committed the same change on main and on the branch. Used `git log --graph` to see the split, confirmed the content matched. Kept a backup branch, then reset main to match GitHub. Working code was never committed and disappeared from the file. Recovered it with Cursor’s Timeline. Lesson: commit as soon as it works.
