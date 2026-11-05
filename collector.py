@@ -18,6 +18,7 @@ def load_token():
         raise SystemExit("GITHUB_TOKEN not found. Add it to your .env file.")
     return token
 
+
 def load_catalog():
     """read controls.yaml and return each check, looked up by its id."""
     with open("controls.yaml") as f:
@@ -83,6 +84,23 @@ def check_secret_scanning(repo_info):
     return "fail", f"Secret scanning is {status}."
 
 
+def check_dependabot(repo_info):
+    """GH-04: Is Dependabot security updates enabled?
+
+    Returns (status, detail). Status is "pass", "fail", or "error".
+    """
+    section = repo_info.get("security_and_analysis")
+    if section is None:
+        return "error", "Security settings not visible to this token; could not verify."
+    dependabot = section.get("dependabot_security_updates", {})
+    status = dependabot.get("status")
+    if status is None:
+        return "error", "Dependabot security updates status not reported; could not verify."
+    if status == "enabled":
+        return "pass", "Dependabot is enabled."
+    return "fail", f"Dependabot security updates are {status}."
+
+
 def print_result(check_id, catalog, status, detail):
     """Print one check result with its mapped controls."""
     check = catalog[check_id]
@@ -91,6 +109,7 @@ def print_result(check_id, catalog, status, detail):
     print(f"[{status.upper()}] {check_id} {check['title']}")
     print(f"       {detail}")
     print(f"       Controls: {controls}")
+
 
 def main():
     headers = {
@@ -116,6 +135,9 @@ def main():
 
     status, detail = check_secret_scanning(repo_info)
     print_result("GH-03", catalog, status, detail)
+
+    status, detail = check_dependabot(repo_info)
+    print_result("GH-04", catalog, status, detail)
 
 
 if __name__ == "__main__":
