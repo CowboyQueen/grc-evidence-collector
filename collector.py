@@ -68,6 +68,21 @@ def check_pr_reviews_required(headers, repo, branch):
     return "pass", f"{reviews['required_approving_review_count']} approving review(s) required before merging."
 
 
+def check_secret_scanning(repo_info):
+    """GH-03: Is secret scanning enabled?
+
+    Returns (status, detail). Status is "pass", "fail", or "error".
+    """
+    section = repo_info.get("security_and_analysis")
+    if section is None:
+        return "error", "Security settings not visible to this token; could not verify."
+    scanning = section.get("secret_scanning", {})
+    status = scanning.get("status")
+    if status == "enabled":
+        return "pass", "Secret scanning is enabled."
+    return "fail", f"Secret scanning is {status}."
+
+
 def print_result(check_id, catalog, status, detail):
     """Print one check result with its mapped controls."""
     check = catalog[check_id]
@@ -76,7 +91,6 @@ def print_result(check_id, catalog, status, detail):
     print(f"[{status.upper()}] {check_id} {check['title']}")
     print(f"       {detail}")
     print(f"       Controls: {controls}")
-
 
 def main():
     headers = {
@@ -91,15 +105,18 @@ def main():
         raise SystemExit(f"Could not reach GitHub ({type(exc).__name__}).")  
     if response.status_code != 200:
         raise SystemExit(f"Could not read {REPO} (status {response.status_code}).")
-    branch = response.json()["default_branch"]
+    repo_info = response.json()
+    branch = repo_info["default_branch"]
 
     status, detail = check_branch_protected(headers, REPO, branch)
-
     print_result("GH-01", catalog, status, detail)
 
     status, detail = check_pr_reviews_required(headers, REPO, branch)
-
     print_result("GH-02", catalog, status, detail)
+
+    status, detail = check_secret_scanning(repo_info)
+    print_result("GH-03", catalog, status, detail)
+
 
 if __name__ == "__main__":
     main()
