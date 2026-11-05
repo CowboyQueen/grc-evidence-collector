@@ -97,7 +97,7 @@ def check_dependabot(repo_info):
     if status is None:
         return "error", "Dependabot security updates status not reported; could not verify."
     if status == "enabled":
-        return "pass", "Dependabot is enabled."
+        return "pass", "Dependabot security updates are enabled."
     return "fail", f"Dependabot security updates are {status}."
 
 
