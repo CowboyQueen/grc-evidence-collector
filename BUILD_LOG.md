@@ -47,14 +47,14 @@ A license tells others how they can use and public repos should always include o
 Every commit has a unique ID
 {HEAD -> main, original/main means local and GitHub copy are synced}
 **GRC connection:** CM-3 (Configuration Change Control) version control gives complete and ordered history of all changes
-AU-9 (Protection of Audit Info) Commit IDs are content hashes so if altered, IDs change. That is the same tamper IDs an evidence collector uses with SHA-256. {.gitignore} is a preventative control against leaking secrets, relating to IA-5 and SC-28
+AU-9 (Protection of Audit Info) Commit IDs are content hashes so if altered, IDs change. That is the same tamper IDs an evidence collector uses with SHA-256. {.gitignore} is a preventative control against leaking secrets, relating to IA-5 (Authenticator Management) and SC-28 (Protection of Information at Rest) 
 **Obstacle:** Has a typo for the {git log}. Typed "online" instead of "oneline", Git errored as "unrecognized argument" rather than guessing. Cursor's New Text File creates and unnamed file with no location; New File in the Explorer panel is best.
 
 ## Step 5: Complete first push to Git — 10-21-2026
 **Goal:** Open the project in Cursor, create the build log, commit and push
 **What I did:** Completed the first full cycle of a real change to the project, that will continue in each push (edit->stage->commit->push). Created a file in Cursor within the project. added all steps completed thus far, and completed a push to the Github repo
 **What I learned:** How to connect create a file within the project. How to save changes and to preview before push. Stage {git add} which is a review before completing a push.
-**GRC connection:** Staging is a purposeful review point where you choose what goes into the change, which is the same idea (CM-3) reviewing changes before approval
+**GRC connection:** Staging is a purposeful review point where you choose what goes into the change, which is the same idea CM-3 (Configuration Change Control) reviewing changes before approval
 **Obstacle:** No obstacles to report getting this completed
 
 ## Step 6: Setup Python virtual environment — 10-22-2026
@@ -75,7 +75,7 @@ AU-9 (Protection of Audit Info) Commit IDs are content hashes so if altered, IDs
 **Goal:** Creating the code that walks through the catalog
 **What I did:** Made sure secrets cannot be committed (before creating any),create a fine-grained, read-only 90-day token, and stored it in an ignored [.env]; made first authenticated API call
 **What I learned:** What an API is in action, status codes (200,401,404), and how to check and store secrets and to never have them inside the code
-**GRC connection:** AC-6 (Least Privilege), IA-5 (rotation via expiry), preventative controls on secrets(ignored before creation), and verifying with {git check-ignore} rather than assuming
+**GRC connection:** AC-6 (Least Privilege), IA-5 (Authenticator Management) (rotation via expiry), preventative controls on secrets(ignored before creation), and verifying with {git check-ignore} rather than assuming
 **Obstacle:** Had a stray space in original check on [collector.py] without saving. Changes made and saved
 
 ## Step 9: First real control check, GH-01 — 10-23-2026
@@ -86,7 +86,7 @@ Committed: Add GH-01 branch protection checked mapped to CM-3, CM-5, CC8.1
 **What I learned:** How to read a traceback bottom-up: the last line says what went wrong, the line above says where. Scope: variables created inside a function only exist inside it In [module] vs [main] in a traceback shows where code is running
 Reviewing the whole file finds several errors at once, vs debugging them one by one.  [git diff] shows exactly what changed and q exits the pager
 Branch protection with no boxes checked still blocks force pushes and deleting the branch, but allows norm pushes
-**GRC connection:** Detect-> remediate->verify-the full control cycle. Can't verify = error, never pass (fail-safe design). A check you've never seen fail hasn't proven anything.  GH-01 provides evidence for CM-3, CM-5 and SOC2 CC8.1. Protected means the audit trail can't be quietly rewritten
+**GRC connection:** Detect-> remediate->verify-the full control cycle. Can't verify = error, never pass (fail-safe design). A check you've never seen fail hasn't proven anything.  GH-01 provides evidence for CM-3 (Configuration Change Control), CM-5 (Access Restrictions for Change) and SOC2 CC8.1. Protected means the audit trail can't be quietly rewritten
 **Obstacle:** IndentationError on def load_catalog() (stray spaces)
 An extra quote: "unterminated string literal"
 catalog ["checks]", a bracket inside the quotes, causing a KeyError
@@ -99,7 +99,7 @@ The virtual environment wasn’t active after the restart; it worked only becaus
 **Goal** To report the error instead of simply crashing. 
 **What I did:** wrapped API calls in try/except, simulated a network failure with a .invalid address, confirmed ERROR, restored the address, and confirmed PASS
 **What I learned:**  try/except; RequestException catches all network errors from requests; why repo lookup stops the script while the check returns "error"
-**GRC connection:** every run leaves evidence when it can't check (AU-5), testing a safeguard instead of trusting it (CA-2)
+**GRC connection:** every run leaves evidence when it can't check AU-5 (Response to Audit Logging Process Failures), testing a safeguard instead of trusting it CA-2 (Control Assessment)
 **Obstacle:** No obstacles experienced
 
 ## Step 11: GitHub pull request reviews— 11-02-2026
@@ -126,6 +126,17 @@ My tool caught drift: GitHub set 1 required approval automatically. GH-02 report
 
 **What I learned:** gaining on my understanding of navigating nested data one level at a time. A key versus its value (`"status" vs "enabled"`). `if __name__ == "__main__":` makes functions importable and testable as well as unit testing with controlled inputs
 
-**GRC connection:** Controls: IA-5, SI-4, CC6.1. Missing data is ERROR, not FAIL or PASS. A check that can never pass is broken too. Failure paths must be tested, but never by weakening controls. Use fake data instead.
+**GRC connection:** Controls: IA-5 (Authenticator Management), SI-4 (System Monitoring), CC6.1. Missing data is ERROR, not FAIL or PASS. A check that can never pass is broken too. Failure paths must be tested, but never by weakening controls. Use fake data instead.
 
 **Obstacle:** `"enabled"` used as a key. Leftover API text in `.get()`. Stepping down too many levels and `print_result()` lost while editing. Committed the same change on main and on the branch. Used `git log --graph` to see the split, confirmed the content matched. Kept a backup branch, then reset main to match GitHub. Working code was never committed and disappeared from the file. Recovered it with Cursor’s Timeline. Lesson: commit as soon as it works.
+
+## Step 13: GH-04 Dependabot security updates are enabled — 11-5-2026
+**Goal:** Check whether Dependabot security updates are enabled, so vulnerable dependencies get fix pull requests automatically. 
+
+**What I did:** Wrote GH-04 from a spec, mostly from memory; caught a wrong-key bug; added "status missing->error"; enabled the dependency graph, Dependabot alerts and security updates. Tested FAIL->PASS
+
+**What I learned:** A wrong key can make a check fail forever while appearing to be correct; why testing the pass path matters. It caught the old message. What a dependency graph and SBOM are related within code and the purposes. 
+
+**GRC connection:** RA-5 (Vulnerability Monitoring and Scanning), SI-2 (Flaw Remediation), SI-5 (Security alerts, Advisories, and Directives), and SOC 2 CC7.1; Detect-> Remediate-> verify for a third control. Precise wording in evidence such as "security updates" and not just Dependabot
+
+**Obstacle:** Wrong key: used "dependabot" instead of "dependabot_security_updates", so the check would have failed forever. Adding “status missing → error” makes that kind of bug visible. Updated the fail message but missed the pass message; the fake-data test for the enabled case caught it. Lesson: test every path, including one you can’t reach yet in a real scenario. Enabling Dependabot alerts required the dependency graph first. Controls have dependencies; you can’t monitor for vulnerabilities without an inventory of what you run.
