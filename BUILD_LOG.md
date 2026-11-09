@@ -140,3 +140,24 @@ My tool caught drift: GitHub set 1 required approval automatically. GH-02 report
 **GRC connection:** RA-5 (Vulnerability Monitoring and Scanning), SI-2 (Flaw Remediation), SI-5 (Security alerts, Advisories, and Directives), and SOC 2 CC7.1; Detect-> Remediate-> verify for a third control. Precise wording in evidence such as "security updates" and not just Dependabot
 
 **Obstacle:** Wrong key: used "dependabot" instead of "dependabot_security_updates", so the check would have failed forever. Adding “status missing → error” makes that kind of bug visible. Updated the fail message but missed the pass message; the fake-data test for the enabled case caught it. Lesson: test every path, including one you can’t reach yet in a real scenario. Enabling Dependabot alerts required the dependency graph first. Controls have dependencies; you can’t monitor for vulnerabilities without an inventory of what you run.
+
+## Step 14: Loop over the catalog — 11-9-2026
+**Goal:**  Make the tool safer and easier to grow by having consistent error handling, one API call per piece of data, and a loop that checks the catalog each time so there are no silent skips
+
+**What I did:** 14a- Cleanup: GH-03 reports a missing status as an error and GH-02 reads the approval count once with `.get()`
+
+14b P1- every check now shares a `context` input. Added `fetch_branch_protection()` so branch protection is fetched once for GH-01 and GH-02 and no longer calls the API themselves
+
+14b P2- added a `CHECKS` table that maps each ID to its functions, replaced 8 lines of code in `main()` with loop over `controls.yaml`. Now, a catalog entry reports missing code as ERROR 
+Tested with real runs and a temporary GH-05 entry and removed it with `git restore`
+
+**What I learned:** A refactor changes structure, not behavior by using the results of before and after. Fetch functions talk to the network and check funtions make judgement from data and allows them to be tested with fake data
+`for` loops. Each `.get()` opens one level: `context` -> `repo_info` -> `security_and_analysis`
+
+**GRC connection:** Completeness- catalog is the source of truth, so every control you claim to check gets attempted, and gaps show as ERROR. Looping over the catalog, not the code, is like testing the full population rather than a convenient sample. 
+A cleanup must not change results-comparing output caught a false PASS in GH-02 before it was committed
+Fixed the duplicate call flagged in my PR#1 review comment: Observation tracked and closed.
+
+**Obstacle:** section looked one level too high, and at a key that didn't exist. An extra line made a duplicate API call. The loop went over `CHECKS` instead of catalog, which would have quietly disabled the safety net. Unsaved files hid the GH-05 test result- turned on autosave. Copied the fetch function for GH-02 instead of reusing the shared one
+function
+
