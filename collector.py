@@ -107,6 +107,14 @@ def check_dependabot(context):
     return "fail", f"Dependabot security updates are {status}."
 
 
+CHECKS = {
+    "GH-01": check_branch_protected,
+    "GH-02": check_pr_reviews_required,
+    "GH-03": check_secret_scanning,
+    "GH-04": check_dependabot,
+}
+
+
 def print_result(check_id, catalog, status, detail):
     """Print one check result with its mapped controls."""
     check = catalog[check_id]
@@ -137,17 +145,13 @@ def main():
         "branch": branch,
         "protection": fetch_branch_protection(headers, REPO, branch),
     }
-    status, detail = check_branch_protected(context)
-    print_result("GH-01", catalog, status, detail)
-
-    status, detail = check_pr_reviews_required(context)
-    print_result("GH-02", catalog, status, detail)
-
-    status, detail = check_secret_scanning(context)
-    print_result("GH-03", catalog, status, detail)
-
-    status, detail = check_dependabot(context)
-    print_result("GH-04", catalog, status, detail)
+    for check_id in catalog:
+        check_function = CHECKS.get(check_id)
+        if check_function is None:
+            print_result(check_id, catalog, "error", "No code exists for this check; could not verify.")
+            continue
+        status, detail = check_function(context)
+        print_result(check_id, catalog, status, detail)
 
 
 if __name__ == "__main__":
