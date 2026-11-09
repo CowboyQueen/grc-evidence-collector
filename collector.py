@@ -64,9 +64,10 @@ def check_pr_reviews_required(headers, repo, branch):
 
     if not reviews:
         return "fail", "No review required."
-    if reviews["required_approving_review_count"] == 0:
+    count = reviews.get("required_approving_review_count", 0)
+    if count == 0:
         return "fail", "Pull requests do not require any reviews."
-    return "pass", f"{reviews['required_approving_review_count']} approving review(s) required before merging."
+    return "pass", f"{count} approving review(s) required before merging."
 
 
 def check_secret_scanning(repo_info):
@@ -76,9 +77,11 @@ def check_secret_scanning(repo_info):
     """
     section = repo_info.get("security_and_analysis")
     if section is None:
-        return "error", "Security settings not visible to this token; could not verify."
+        return "error", "Secret scanning settings not visible to this token; could not verify."
     scanning = section.get("secret_scanning", {})
     status = scanning.get("status")
+    if status is None:
+        return "error", "Secret scanning status not reported; could not verify."
     if status == "enabled":
         return "pass", "Secret scanning is enabled."
     return "fail", f"Secret scanning is {status}."
