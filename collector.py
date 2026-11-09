@@ -25,43 +25,44 @@ def load_catalog():
         catalog = yaml.safe_load(f)
         return {check["id"]: check for check in catalog["checks"]}
 
+def fetch_branch_protection(headers, repo, branch):
+    """Fetch branch protection once, for every check that needs it."""
+    url = f"{API}/repos/{repo}/branches/{branch}/protection"
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+    except requests.RequestException as exc:
+        return {"error": type(exc).__name__}
+    if response.status_code == 404:
+        return {"protected": False}
+    if response.status_code != 200:
+        return {"error": f"status {response.status_code}"}
+    return {"protected": True, "rules": response.json()}
     
-def check_branch_protected(headers, repo, branch):
+def check_branch_protected(context):
     """GH-01: Is the default branch protected?
 
     Returns (status, detail). Status is "pass", "fail", or "error".
     """
-    url = f"{API}/repos/{repo}/branches/{branch}/protection"
-    try:
-        response = requests.get(url, headers=headers, timeout=30)
-    except requests.RequestException as exc:
-        return "error", f"Could not reach GitHub ({type(exc).__name__}); could not verify."
-    if response.status_code == 200:
+    protection = context["protection"]
+    branch = context["branch"]
+    if "error" in protection:
+        return "error", f"Could not read branch protection ({protection['error']}); could not verify."
+    if protection["protected"]:
         return "pass", f"Branch '{branch}' has protection rules."
-    if response.status_code == 404:
-        return "fail", f"Branch '{branch}' has no protection rules."
-    return "error", f"Unexpected response {response.status_code}; could not verify."
+    return "fail", f"Branch '{branch}' has no protection rules."
 
 
-def check_pr_reviews_required(headers, repo, branch):
+def check_pr_reviews_required(context):
     """GH-02: Do pull requests need at least one approving review?
 
     Returns (status, detail). Status is "pass", "fail", or "error".
     """
-    url = f"{API}/repos/{repo}/branches/{branch}/protection"
-    try:
-        response = requests.get(url, headers=headers, timeout=30)
-    except requests.RequestException as exc:
-        return "error", f"Could not reach GitHub ({type(exc).__name__}); could not verify."
-
-    if response.status_code == 404:
+    protection = context["protection"]
+    if "error" in protection:
+        return "error", f"Could not read branch protection ({protection['error']}); could not verify."
+    if not protection["protected"]:
         return "fail", "No branch protection, so reviews are not required."
-    if response.status_code != 200:
-        return "error", f"Unexpected response {response.status_code}; could not verify."
-
-    protection = response.json()
-    reviews = protection.get("required_pull_request_reviews")
-
+    reviews = protection["rules"].get("required_pull_request_reviews")
     if not reviews:
         return "fail", "No review required."
     count = reviews.get("required_approving_review_count", 0)
@@ -70,11 +71,12 @@ def check_pr_reviews_required(headers, repo, branch):
     return "pass", f"{count} approving review(s) required before merging."
 
 
-def check_secret_scanning(repo_info):
+def check_secret_scanning(context):
     """GH-03: Is secret scanning enabled?
 
     Returns (status, detail). Status is "pass", "fail", or "error".
     """
+    repo_info = context["repo_info"]
     section = repo_info.get("security_and_analysis")
     if section is None:
         return "error", "Secret scanning settings not visible to this token; could not verify."
@@ -87,11 +89,12 @@ def check_secret_scanning(repo_info):
     return "fail", f"Secret scanning is {status}."
 
 
-def check_dependabot(repo_info):
-    """GH-04: Is Dependabot security updates enabled?
+def check_dependabot(context):
+    """GH-04: Are Dependabot security updates enabled?
 
     Returns (status, detail). Status is "pass", "fail", or "error".
     """
+    repo_info = context["repo_info"]
     section = repo_info.get("security_and_analysis")
     if section is None:
         return "error", "Security settings not visible to this token; could not verify."
@@ -129,17 +132,21 @@ def main():
         raise SystemExit(f"Could not read {REPO} (status {response.status_code}).")
     repo_info = response.json()
     branch = repo_info["default_branch"]
-
-    status, detail = check_branch_protected(headers, REPO, branch)
+    context = {
+        "repo_info": repo_info,
+        "branch": branch,
+        "protection": fetch_branch_protection(headers, REPO, branch),
+    }
+    status, detail = check_branch_protected(context)
     print_result("GH-01", catalog, status, detail)
 
-    status, detail = check_pr_reviews_required(headers, REPO, branch)
+    status, detail = check_pr_reviews_required(context)
     print_result("GH-02", catalog, status, detail)
 
-    status, detail = check_secret_scanning(repo_info)
+    status, detail = check_secret_scanning(context)
     print_result("GH-03", catalog, status, detail)
 
-    status, detail = check_dependabot(repo_info)
+    status, detail = check_dependabot(context)
     print_result("GH-04", catalog, status, detail)
 
 
