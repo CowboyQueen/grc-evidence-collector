@@ -151,7 +151,7 @@ My tool caught drift: GitHub set 1 required approval automatically. GH-02 report
 14b P2- added a `CHECKS` table that maps each ID to its functions, replaced 8 lines of code in `main()` with loop over `controls.yaml`. Now, a catalog entry reports missing code as ERROR 
 Tested with real runs and a temporary GH-05 entry and removed it with `git restore`
 
-**What I learned:** A refactor changes structure, not behavior by using the results of before and after. Fetch functions talk to the network and check funtions make judgement from data and allows them to be tested with fake data
+**What I learned:** A refactor changes structure, not behavior by using the results of before and after. Fetch functions talk to the network and check functions make judgement from data and allows them to be tested with fake data
 `for` loops. Each `.get()` opens one level: `context` -> `repo_info` -> `security_and_analysis`
 
 **GRC connection:** Completeness- catalog is the source of truth, so every control you claim to check gets attempted, and gaps show as ERROR. Looping over the catalog, not the code, is like testing the full population rather than a convenient sample. 
@@ -161,3 +161,15 @@ Fixed the duplicate call flagged in my PR#1 review comment: Observation tracked 
 **Obstacle:** section looked one level too high, and at a key that didn't exist. An extra line made a duplicate API call. The loop went over `CHECKS` instead of catalog, which would have quietly disabled the safety net. Unsaved files hid the GH-05 test result- turned on autosave. Copied the fetch function for GH-02 instead of reusing the shared one
 function
 
+## Step 15: Output into audit evidence — 11-10-2026
+**Goal:**  Taking my whole flow from results printing to the screen and disappearing to timestamped evidence files that include a SHA-256 fingerprint to provide proof that evidence has or has not been altered supporting integrity
+
+**What I did:** Each check’s result is added to a `results` list and added the `save_evidence()` function and first committed to a file. The file includes a UTC timestamped, SHA-256 fingerprint, frameworks, and check ID. First tested, to see the outcome worked, sha256sum -c reported OK. Then opened the evidence file, made a change to one output, from "fail" to "pass". Verified the same file again, and this time it FAILED, showing it flagged due to it being tampered. Deleted test files and a fresh, untouched run was committed. 
+
+Note: original real runs remained unchanged throughout the process (PASS, FAIL, PASS, PASS)
+
+**What I learned:** Evidence that cannot be verified, is just a claim. Test both directions: an untouched file should verify OK, and an altered file should FAIL. Evidence is NEVER to be edited. 
+
+**GRC connection:** Evidence files are never edited; each run creates a new file (immutability). The fingerprint is evidence for NIST 800-53 AU-9 (Protection of Audit Information) and SI-7 (Information Integrity). 
+
+**Obstacle:** Took time to add a python course to further improve my knowledge and to assist throughout this build. Had a scope error that I recognized as soon as it occurred, which is improvement from the last time. Corrected and rerun without issue. Filled results with fetch calls instead of starting it empty and appending inside the loop. The branch name mismatch (saved vs save), fixed with Tab completion or git branch -m
