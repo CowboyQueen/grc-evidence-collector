@@ -1,6 +1,9 @@
 """GRC Evidence Collector: Checks GitHub settings and maps results to controls."""
 import os
-
+import hashlib
+import json
+import os
+from datetime import datetime, timezone
 import requests
 import yaml
 
@@ -115,6 +118,28 @@ CHECKS = {
 }
 
 
+def save_evidence(results):
+    """Write results to a timestamped JSON file, with a SHA-256 hash file beside it."""
+    collected_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    evidence = {
+        "repository": REPO,
+        "collected_at": collected_at,
+        "collector_version": "0.1",
+        "results": results,
+    }
+    body = json.dumps(evidence, indent=2, sort_keys=True)
+    digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+
+    os.makedirs("evidence", exist_ok=True)
+    stamp = collected_at.replace(":", "").replace("-", "")
+    filename = f"evidence_{stamp}.json"
+    with open(f"evidence/{filename}", "w") as f:
+        f.write(body)
+    with open(f"evidence/{filename}.sha256", "w") as f:
+        f.write(f"{digest}  {filename}\n")
+    return filename, digest
+
+
 def print_result(check_id, catalog, status, detail):
     """Print one check result with its mapped controls."""
     check = catalog[check_id]
@@ -145,14 +170,24 @@ def main():
         "branch": branch,
         "protection": fetch_branch_protection(headers, REPO, branch),
     }
+    results = []
     for check_id in catalog:
         check_function = CHECKS.get(check_id)
         if check_function is None:
-            print_result(check_id, catalog, "error", "No code exists for this check; could not verify.")
-            continue
-        status, detail = check_function(context)
+            status, detail = "error", "No code exists for this check; could not verify."
+        else:
+            status, detail = check_function(context)
         print_result(check_id, catalog, status, detail)
-
+        results.append({
+            "check_id": check_id,
+            "title": catalog[check_id]["title"],
+            "status": status,
+            "detail": detail,
+            "frameworks": catalog[check_id]["frameworks"],
+        })
+    filename, digest = save_evidence(results)
+    print(f"\nEvidence saved: evidence/{filename}")
+    print(f"SHA-256: {digest}")
 
 if __name__ == "__main__":
     main()
