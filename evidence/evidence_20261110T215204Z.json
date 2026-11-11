@@ -1,0 +1,164 @@
+{
+  "collected_at": "2026-11-10T21:52:04Z",
+  "collector_version": "0.1",
+  "repositories": [
+    "CowboyQueen/grc-evidence-collector",
+    "CowboyQueen/audit-target-demo"
+  ],
+  "results": [
+    {
+      "check_id": "GH-01",
+      "detail": "Branch 'main' has protection rules.",
+      "frameworks": {
+        "nist_800_53": [
+          "CM-3",
+          "CM-5"
+        ],
+        "soc2": [
+          "CC8.1"
+        ]
+      },
+      "repositories": [
+        "CowboyQueen/grc-evidence-collector",
+        "CowboyQueen/audit-target-demo"
+      ],
+      "status": "pass",
+      "title": "Default branch is protected"
+    },
+    {
+      "check_id": "GH-02",
+      "detail": "Pull requests do not require any reviews.",
+      "frameworks": {
+        "nist_800_53": [
+          "CM-3",
+          "SA-10"
+        ],
+        "soc2": [
+          "CC8.1"
+        ]
+      },
+      "repositories": [
+        "CowboyQueen/grc-evidence-collector",
+        "CowboyQueen/audit-target-demo"
+      ],
+      "status": "fail",
+      "title": "Pull requests require review"
+    },
+    {
+      "check_id": "GH-03",
+      "detail": "Secret scanning is enabled.",
+      "frameworks": {
+        "nist_800_53": [
+          "IA-5",
+          "SI-4"
+        ],
+        "soc2": [
+          "CC6.1"
+        ]
+      },
+      "repositories": [
+        "CowboyQueen/grc-evidence-collector",
+        "CowboyQueen/audit-target-demo"
+      ],
+      "status": "pass",
+      "title": "Secret scanning is enabled"
+    },
+    {
+      "check_id": "GH-04",
+      "detail": "Dependabot security updates are enabled.",
+      "frameworks": {
+        "nist_800_53": [
+          "RA-5",
+          "SI-2",
+          "SI-5"
+        ],
+        "soc2": [
+          "CC7.1"
+        ]
+      },
+      "repositories": [
+        "CowboyQueen/grc-evidence-collector",
+        "CowboyQueen/audit-target-demo"
+      ],
+      "status": "pass",
+      "title": "Dependabot security updates are enabled"
+    },
+    {
+      "check_id": "GH-01",
+      "detail": "Branch 'main' has no protection rules.",
+      "frameworks": {
+        "nist_800_53": [
+          "CM-3",
+          "CM-5"
+        ],
+        "soc2": [
+          "CC8.1"
+        ]
+      },
+      "repositories": [
+        "CowboyQueen/grc-evidence-collector",
+        "CowboyQueen/audit-target-demo"
+      ],
+      "status": "fail",
+      "title": "Default branch is protected"
+    },
+    {
+      "check_id": "GH-02",
+      "detail": "No branch protection, so reviews are not required.",
+      "frameworks": {
+        "nist_800_53": [
+          "CM-3",
+          "SA-10"
+        ],
+        "soc2": [
+          "CC8.1"
+        ]
+      },
+      "repositories": [
+        "CowboyQueen/grc-evidence-collector",
+        "CowboyQueen/audit-target-demo"
+      ],
+      "status": "fail",
+      "title": "Pull requests require review"
+    },
+    {
+      "check_id": "GH-03",
+      "detail": "Secret scanning is enabled.",
+      "frameworks": {
+        "nist_800_53": [
+          "IA-5",
+          "SI-4"
+        ],
+        "soc2": [
+          "CC6.1"
+        ]
+      },
+      "repositories": [
+        "CowboyQueen/grc-evidence-collector",
+        "CowboyQueen/audit-target-demo"
+      ],
+      "status": "pass",
+      "title": "Secret scanning is enabled"
+    },
+    {
+      "check_id": "GH-04",
+      "detail": "Dependabot security updates are disabled.",
+      "frameworks": {
+        "nist_800_53": [
+          "RA-5",
+          "SI-2",
+          "SI-5"
+        ],
+        "soc2": [
+          "CC7.1"
+        ]
+      },
+      "repositories": [
+        "CowboyQueen/grc-evidence-collector",
+        "CowboyQueen/audit-target-demo"
+      ],
+      "status": "fail",
+      "title": "Dependabot security updates are enabled"
+    }
+  ]
+}

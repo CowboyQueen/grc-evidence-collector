@@ -7,7 +7,10 @@ from datetime import datetime, timezone
 import requests
 import yaml
 
-REPO = "CowboyQueen/grc-evidence-collector"
+REPOS = [
+    "CowboyQueen/grc-evidence-collector",
+    "CowboyQueen/audit-target-demo",
+]
 API = "https://api.github.com"
 def load_token():
     """Get the token from environment, or from the .env file."""
@@ -27,6 +30,16 @@ def load_catalog():
     with open("controls.yaml") as f:
         catalog = yaml.safe_load(f)
         return {check["id"]: check for check in catalog["checks"]}
+
+def fetch_repo_info(headers, repo):
+    """Fetch a repository's settings. Returns (repo_info, problem)."""
+    try:
+        response = requests.get(f"{API}/repos/{repo}", headers=headers, timeout=30)
+    except requests.RequestException as exc:
+        return None, type(exc).__name__
+    if response.status_code != 200:
+        return None, f"status {response.status_code}"
+    return response.json(), None
 
 def fetch_branch_protection(headers, repo, branch):
     """Fetch branch protection once, for every check that needs it."""
@@ -122,7 +135,7 @@ def save_evidence(results):
     """Write results to a timestamped JSON file, with a SHA-256 hash file beside it."""
     collected_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     evidence = {
-        "repository": REPO,
+        "repositories": REPOS,
         "collected_at": collected_at,
         "collector_version": "0.1",
         "results": results,
@@ -149,7 +162,38 @@ def print_result(check_id, catalog, status, detail):
     print(f"       {detail}")
     print(f"       Controls: {controls}")
 
+def audit_repo(headers, catalog, repo):
+    """Run every catalog check against one repository and return its results."""
+    print(f"\n=== {repo} ===")
+    repo_info, problem = fetch_repo_info(headers, repo)
+    context = None
+    if problem is None:
+        branch = repo_info["default_branch"]
+        context = {
+            "repo_info": repo_info,
+            "branch": branch,
+            "protection": fetch_branch_protection(headers, repo, branch),
+        }
 
+    results = []
+    for check_id in catalog:
+        check_function = CHECKS.get(check_id)
+        if context is None:
+            status, detail = "error", f"Could not read repository ({problem}); could not verify."
+        elif check_function is None:
+            status, detail = "error", "No code exists for this check; could not verify."
+        else:
+            status, detail = check_function(context)
+        print_result(check_id, catalog, status, detail)
+        results.append({
+            "repositories": REPOS,
+            "check_id": check_id,
+            "title": catalog[check_id]["title"],
+            "status": status,
+            "detail": detail,
+            "frameworks": catalog[check_id]["frameworks"],
+        })
+    return results
 def main():
     headers = {
         "Authorization": f"Bearer {load_token()}",
@@ -157,37 +201,15 @@ def main():
     }
     catalog = load_catalog()
 
-    try:
-        response = requests.get(f"{API}/repos/{REPO}", headers=headers, timeout=30) 
-    except requests.RequestException as exc:
-        raise SystemExit(f"Could not reach GitHub ({type(exc).__name__}).")  
-    if response.status_code != 200:
-        raise SystemExit(f"Could not read {REPO} (status {response.status_code}).")
-    repo_info = response.json()
-    branch = repo_info["default_branch"]
-    context = {
-        "repo_info": repo_info,
-        "branch": branch,
-        "protection": fetch_branch_protection(headers, REPO, branch),
-    }
     results = []
-    for check_id in catalog:
-        check_function = CHECKS.get(check_id)
-        if check_function is None:
-            status, detail = "error", "No code exists for this check; could not verify."
-        else:
-            status, detail = check_function(context)
-        print_result(check_id, catalog, status, detail)
-        results.append({
-            "check_id": check_id,
-            "title": catalog[check_id]["title"],
-            "status": status,
-            "detail": detail,
-            "frameworks": catalog[check_id]["frameworks"],
-        })
+    for repo in REPOS:
+        results.extend(audit_repo(headers, catalog, repo))
+
     filename, digest = save_evidence(results)
     print(f"\nEvidence saved: evidence/{filename}")
     print(f"SHA-256: {digest}")
+
+  
 
 if __name__ == "__main__":
     main()
