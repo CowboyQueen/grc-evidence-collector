@@ -173,3 +173,16 @@ Note: original real runs remained unchanged throughout the process (PASS, FAIL, 
 **GRC connection:** Evidence files are never edited; each run creates a new file (immutability). The fingerprint is evidence for NIST 800-53 AU-9 (Protection of Audit Information) and SI-7 (Information Integrity). 
 
 **Obstacle:** Took time to add a python course to further improve my knowledge and to assist throughout this build. Had a scope error that I recognized as soon as it occurred, which is improvement from the last time. Corrected and rerun without issue. Filled results with fetch calls instead of starting it empty and appending inside the loop. The branch name mismatch (saved vs save), fixed with Tab completion or git branch -m
+
+## Step 15: Output into audit evidence — 11-10-2026
+**Goal:**  Taking my whole flow from results printing to the screen and disappearing to timestamped evidence files that include a SHA-256 fingerprint to provide proof that evidence has or has not been altered supporting integrity
+
+**What I did:** Each check’s result is added to a `results` list and added the `save_evidence()` function and first committed to a file. The file includes a UTC timestamped, SHA-256 fingerprint, frameworks, and check ID. First tested, to see the outcome worked, sha256sum -c reported OK. Then opened the evidence file, made a change to one output, from "fail" to "pass". Verified the same file again, and this time it FAILED, showing it flagged due to it being tampered. Deleted test files and a fresh, untouched run was committed. 
+
+Note: original real runs remained unchanged throughout the process (PASS, FAIL, PASS, PASS)
+
+**What I learned:** Evidence that cannot be verified, is just a claim. Test both directions: an untouched file should verify OK, and an altered file should FAIL. Evidence is NEVER to be edited. 
+
+**GRC connection:** Evidence files are never edited; each run creates a new file (immutability). The fingerprint is evidence for NIST 800-53 AU-9 (Protection of Audit Information) and SI-7 (Information Integrity). 
+
+**Obstacle:** Took time to add a python course to further improve my knowledge and to assist throughout this build. Had a scope error that I recognized as soon as it occurred, which is improvement from the last time. Corrected and rerun without issue. Filled results with fetch calls instead of starting it empty and appending inside the loop. The branch name mismatch (saved vs save), fixed with Tab completion or git branch -m
