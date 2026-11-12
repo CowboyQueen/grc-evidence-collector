@@ -1,11 +1,13 @@
 """GRC Evidence Collector: Checks GitHub settings and maps results to controls."""
-import os
 import hashlib
 import json
 import os
 from datetime import datetime, timezone
+
 import requests
 import yaml
+
+from ledger import append_to_ledger
 
 REPOS = [
     "CowboyQueen/grc-evidence-collector",
@@ -150,6 +152,7 @@ def save_evidence(results):
         f.write(body)
     with open(f"evidence/{filename}.sha256", "w") as f:
         f.write(f"{digest}  {filename}\n")
+    append_to_ledger(filename, digest, collected_at)
     return filename, digest
 
 
@@ -186,7 +189,7 @@ def audit_repo(headers, catalog, repo):
             status, detail = check_function(context)
         print_result(check_id, catalog, status, detail)
         results.append({
-            "repositories": REPOS,
+            "repository": repo,
             "check_id": check_id,
             "title": catalog[check_id]["title"],
             "status": status,
