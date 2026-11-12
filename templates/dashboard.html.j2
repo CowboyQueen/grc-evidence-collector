@@ -6,6 +6,7 @@
 <title>Compliance Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+
   :root {
     --ink: #0A0B0E;
     --panel: #13151A;
@@ -28,14 +29,19 @@
   .stat b { display: block; font-size: 24px; }
   .stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
   .wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  table { width: 100%; table-layout: fixed; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
   th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
-  .pill { font: 500 11px 'IBM Plex Mono', monospace; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; border: 1px solid; }
+  .pill { font: 500 11px 'IBM Plex Mono', monospace; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; border: 1px solid; display: inline-block; white-space: nowrap; margin: 2px 4px 2px 0; }
   .pass { color: var(--teal); }
   .fail { color: var(--fail); }
   .error { color: var(--champagne); }
   .controls { font: 12px 'IBM Plex Mono', monospace; color: var(--champagne); }
+  .accepted { color: var(--champagne); }
+  .exception { margin-top: 6px; color: var(--muted); font-size: 13px; }
+  th:nth-child(1) { width: 170px; }
+  th:nth-child(2) { width: 32%; }
+  th:nth-child(3) { width: 160px; }
 </style>
 </head>
 <body>
@@ -57,13 +63,21 @@
       <tbody>
       {% for r in results %}
         <tr>
-          <td><span class="pill {{ r.status }}">{{ r.status }}</span></td>
+         <td>
+            <span class="pill {{ r.status }}">{{ r.status }}</span>
+            {% if r.exception %}<span class="pill accepted">accepted risk</span>{% endif %}
+          </td>
           <td><b>{{ r.check_id }}</b> {{ r.title }}</td>
           <td class="controls">
             {{ r.frameworks.nist_800_53 | join(", ") }}<br>
             {{ r.frameworks.soc2 | join(", ") }}
           </td>
-          <td>{{ r.detail }}</td>
+          <td>
+            {{ r.detail }}
+            {% if r.exception %}
+            <div class="exception">{{ r.exception.id }}: {{ r.exception.justification }}<br>Review by {{ r.exception.review_by }}</div>
+            {% endif %}
+          </td>     
         </tr>
       {% endfor %}
       </tbody>

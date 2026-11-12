@@ -2,6 +2,7 @@
 import json
 import os
 
+import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 EVIDENCE_DIR = "evidence"
@@ -40,10 +41,28 @@ def count_statuses(results):
     return counts
 
 
+def load_exceptions():
+    """Return accepted exceptions, looked up by (repository, check_id)."""
+    with open("exceptions.yaml") as f:
+        data = yaml.safe_load(f)
+    lookup = {}
+    for exc in data.get("exceptions", []):
+        if exc.get("status") == "accepted":
+            lookup[(exc["repository"], exc["check_id"])] = exc
+    return lookup
+
+
 def main():
     name = newest_evidence()
     with open(os.path.join(EVIDENCE_DIR, name)) as f:
         evidence = json.load(f)
+
+    exceptions = load_exceptions()
+    for result in evidence["results"]:
+        if result["status"] == "fail":
+            result["exception"] = exceptions.get((result["repository"], result["check_id"]))
+        else:
+            result["exception"] = None
 
     groups = group_by_repository(evidence["results"])
     env = Environment(loader=FileSystemLoader("templates"), autoescape=select_autoescape())
