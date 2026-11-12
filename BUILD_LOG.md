@@ -174,15 +174,55 @@ Note: original real runs remained unchanged throughout the process (PASS, FAIL, 
 
 **Obstacle:** Took time to add a python course to further improve my knowledge and to assist throughout this build. Had a scope error that I recognized as soon as it occurred, which is improvement from the last time. Corrected and rerun without issue. Filled results with fetch calls instead of starting it empty and appending inside the loop. The branch name mismatch (saved vs save), fixed with Tab completion or git branch -m
 
-## Step 15: Output into audit evidence — 11-10-2026
-**Goal:**  Taking my whole flow from results printing to the screen and disappearing to timestamped evidence files that include a SHA-256 fingerprint to provide proof that evidence has or has not been altered supporting integrity
+## Step 16: Multi-repo auditing and an append-only evidence ledger — 11-10-2026
 
-**What I did:** Each check’s result is added to a `results` list and added the `save_evidence()` function and first committed to a file. The file includes a UTC timestamped, SHA-256 fingerprint, frameworks, and check ID. First tested, to see the outcome worked, sha256sum -c reported OK. Then opened the evidence file, made a change to one output, from "fail" to "pass". Verified the same file again, and this time it FAILED, showing it flagged due to it being tampered. Deleted test files and a fresh, untouched run was committed. 
+**Goal:**  Audit more than one repository, and make evidence tamper-evident even against someone who can edit files.
 
-Note: original real runs remained unchanged throughout the process (PASS, FAIL, PASS, PASS)
+**What I did:** 
+Part 1, multiple repos:
+-created `audit-target-demo`, a deliberately insecure repo with default settings
+-expanded the token’s access by exactly one repo, still read-only
+-replaced `REPO` with a `REPOS` list; moved per-repo work into `audit_repo()`
+-added `fetch_repo_info()`, which reports a problem instead of stopping the run
+-`main()` loops over the repos with `.extend()`; evidence records repositories (scope)
+-results: hardened repo 1 FAIL (the accepted exception), demo repo 3 FAILs; a fake repo gave ERROR on all four checks while the run continued
 
-**What I learned:** Evidence that cannot be verified, is just a claim. Test both directions: an untouched file should verify OK, and an altered file should FAIL. Evidence is NEVER to be edited. 
+Part 2, the ledger: a LinkedIn commenter pointed out that a fingerprint stored next to a file can be recomputed by anyone who can edit it
+-reproduced the attack on the Step 15 design: edited evidence, recomputed the `.sha256`, and it said OK
+-built `ledger.py`: append-only and hash-chained, outside the repo, written only by a dedicated `grc-collector` account using one exact command (`tee -a`), locked with `chattr +a`
+-built `verify_evidence.py`: checks the chain, duplicates, each file’s fingerprint (from the file itself) and unrecorded evidence
+-onboarded the Step 15 and 16 evidence after confirming it was unchanged
+-reran the attack: `sha256sum` said OK, but the verifier said FAILED; direct writes and overwrites of the ledger were refused
 
-**GRC connection:** Evidence files are never edited; each run creates a new file (immutability). The fingerprint is evidence for NIST 800-53 AU-9 (Protection of Audit Information) and SI-7 (Information Integrity). 
+**What I learned:** 
 
-**Obstacle:** Took time to add a python course to further improve my knowledge and to assist throughout this build. Had a scope error that I recognized as soon as it occurred, which is improvement from the last time. Corrected and rerun without issue. Filled results with fetch calls instead of starting it empty and appending inside the loop. The branch name mismatch (saved vs save), fixed with Tab completion or git branch -m
+- I was both shocked and excited about the comment on LinkedIn. One, it shows people are paying attention. Two, reproduce that attack, remediate, and build a secure way for checks, then reply I completed it was rewarding
+- Lists, `.extend()` vs `.append()`, and `elif`
+- Returning two values, like `(repo_info, problem)`
+- A hash chain: each entry stores the previous entry's fingerprint, so changing any line breaks every link after it
+
+
+**GRC connection:** Scope: evidence says what was examined, and each result names its system
+Resilience: one unreachable system doesn’t stop the audit
+Hardened vs default: 1 FAIL vs 3, measured by my own tool
+Least privilege applied to a change: the token gained one repo, not all (AC-6)
+Ledger: AU-9(3), AU-9(4), AC-5, AC-6
+Evidence is never edited, even to fix a mistake: fix forward and document the defect
+The ledger proves a file hasn’t changed, not that its contents are correct
+Residual risk: a full admin could remove the append-only flag; next is S3 Object Lock
+Public feedback made the tool stronger: reproduced the weakness before fixing it
+
+**Obstacle:** Part 1: `REPOS` never added (“Did you mean `REPO`?”)
+-a duplicate save block
+-`save_evidence(REPOS)` instead of `save_evidence(results)`
+-a rename mislabeled every result with both repos; found in review, and the committed Step 16 evidence carries the defect, documented, not edited
+-a broad `rm` deleted committed evidence; `git status` caught it, and `git restore` recovered it
+-a branch name mismatch
+
+Part 2:
+-running `wsl --shutdown` in Ubuntu instead of PowerShell
+-the `.tmp` name in `visudo`, and nano’s save prompt
+-a throwaway run’s ledger line would be permanent, so the “after” test used committed evidence, restored from Git
+-`.venv` missing after the restart
+-Git refused to switch branches to protect uncommitted changes
+
