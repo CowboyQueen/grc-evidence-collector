@@ -5,6 +5,8 @@ import os
 import yaml
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from verify_evidence import sha256_of, verify
+
 EVIDENCE_DIR = "evidence"
 OUTPUT_DIR = "site"
 
@@ -56,6 +58,19 @@ def main():
     name = newest_evidence()
     with open(os.path.join(EVIDENCE_DIR, name)) as f:
         evidence = json.load(f)
+    fingerprint = sha256_of(os.path.join(EVIDENCE_DIR, name))
+
+    problems = []
+    try:
+        verified, problems = verify()
+        if problems:
+            integrity_status = "problems"
+        elif name in verified:
+            integrity_status = "verified"
+        else:
+            integrity_status = "not verified"
+    except FileNotFoundError:
+        integrity_status = "unavailable"
 
     exceptions = load_exceptions()
     for result in evidence["results"]:
@@ -71,6 +86,9 @@ def main():
         collected_at=evidence["collected_at"],
         groups=groups,
         counts={repo: count_statuses(items) for repo, items in groups.items()},
+        fingerprint=fingerprint,
+        integrity_status=integrity_status,
+        problems=problems,
     )
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)

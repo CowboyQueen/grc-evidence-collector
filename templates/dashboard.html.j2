@@ -42,6 +42,11 @@
   th:nth-child(1) { width: 170px; }
   th:nth-child(2) { width: 32%; }
   th:nth-child(3) { width: 160px; }
+  .integrity { margin: 20px 0 8px; padding: 12px 16px; border: 1px solid var(--line); border-left: 4px solid var(--champagne); border-radius: 8px; background: var(--panel); font-size: 14px; }
+  .integrity.verified { border-left-color: var(--teal); }
+  .integrity.problems, .integrity.not-verified { border-left-color: var(--fail); }
+  .integrity ul { margin: 6px 0 0; padding-left: 18px; }
+  .fingerprint { margin-top: 6px; font: 12px 'IBM Plex Mono', monospace; color: var(--muted); word-break: break-all; }
 </style>
 </head>
 <body>
@@ -49,6 +54,20 @@
   <div class="eyebrow">Continuous control monitoring</div>
   <h1>Compliance Dashboard</h1>
   <div class="meta">Collected {{ collected_at }} (UTC) · Source: {{ evidence_file }}</div>
+    <div class="integrity {{ integrity_status | replace(' ', '-') }}">
+    <b>Evidence integrity:</b>
+    {% if integrity_status == "verified" %}
+      verified against the append-only ledger; hash chain intact.
+    {% elif integrity_status == "problems" %}
+      problems found in the ledger.
+      <ul>{% for p in problems %}<li>{{ p }}</li>{% endfor %}</ul>
+    {% elif integrity_status == "unavailable" %}
+      ledger not available; integrity not verified.
+    {% else %}
+      this evidence file is not recorded in the ledger.
+    {% endif %}
+    <div class="fingerprint">SHA-256: {{ fingerprint }}</div>
+  </div>
 
   {% for repo, results in groups.items() %}
   <h2>{{ repo }}</h2>
