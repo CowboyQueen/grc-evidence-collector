@@ -228,14 +228,14 @@ Part 2:
 
 ## Step 17: Compliance dashboard — 11-16-2026
 
-**Goal:** Turn the evidence unto a page people can read at a glance, in my brand colors, showing decisions next to findingd and whether eveidence can be trusted 
+**Goal:** Turn the evidence unto a page people can read at a glance, in my brand colors, showing decisions next to finding and whether evidence can be trusted 
 
 **What I did:** 17a-Added site/ to `.gitignore` since the dashboard is generated from evidence and can always be rebuilt. 
 17b-Built `report.py` that finds the newest evidence file, groups results by repository, and wrote `count_statuses()` myself to count pass, fail, and error.
 17c-Built the Jinja2 template `template/dashboard.html.j2, with brand colors as CSS variables, a section per repo, stat tiles and a results table
 17d-Opened it from WSL with `explorer.exe "$(wslpath -w site/index.html)"`
-17e.1-added exceptions on the dashboard. Added a `repository` field to EXC-001, `load_exceptions()` matches on `repository, check_id)` together, failingresults show an :accepted risk" pill, plus the justification and review date. FAIL counts stay the same.
-17e.2-Fixed layout issues. Pills no longer split across lines, columns line up btween tabes and the review date is on its own line.
+17e.1-added exceptions on the dashboard. Added a `repository` field to EXC-001, `load_exceptions()` matches on `repository, check_id)` together, `failingresults` show an :accepted risk" pill, plus the justification and review date. FAIL counts stay the same.
+17e.2-Fixed layout issues. Pills no longer split across lines, columns line up between tabes and the review date is on its own line.
 17f-split `verify_evidence.py` into `verify()` (returns results) and `main()` (prints and exits), so `report.py` could reuse it, the page shows the evidence fingerprint and a status box; verified, problems, not verified, or unavailable
 Tested: counts 3/1/0 and 1/3/0, EXC-001 appears only on my repos's GH-02, tampering turned the integrity box red; `git restore` brought it back to verified
 
