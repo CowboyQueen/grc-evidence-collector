@@ -226,3 +226,28 @@ Part 2:
 -`.venv` missing after the restart
 -Git refused to switch branches to protect uncommitted changes
 
+## Step 17: Compliance dashboard — 11-16-2026
+
+**Goal:** Turn the evidence unto a page people can read at a glance, in my brand colors, showing decisions next to findingd and whether eveidence can be trusted 
+
+**What I did:** 17a-Added site/ to `.gitignore` since the dashboard is generated from evidence and can always be rebuilt. 
+17b-Built `report.py` that finds the newest evidence file, groups results by repository, and wrote `count_statuses()` myself to count pass, fail, and error.
+17c-Built the Jinja2 template `template/dashboard.html.j2, with brand colors as CSS variables, a section per repo, stat tiles and a results table
+17d-Opened it from WSL with `explorer.exe "$(wslpath -w site/index.html)"`
+17e.1-added exceptions on the dashboard. Added a `repository` field to EXC-001, `load_exceptions()` matches on `repository, check_id)` together, failingresults show an :accepted risk" pill, plus the justification and review date. FAIL counts stay the same.
+17e.2-Fixed layout issues. Pills no longer split across lines, columns line up btween tabes and the review date is on its own line.
+17f-split `verify_evidence.py` into `verify()` (returns results) and `main()` (prints and exits), so `report.py` could reuse it, the page shows the evidence fingerprint and a status box; verified, problems, not verified, or unavailable
+Tested: counts 3/1/0 and 1/3/0, EXC-001 appears only on my repos's GH-02, tampering turned the integrity box red; `git restore` brought it back to verified
+
+**What I learned:** Jinja2: `{{ }}` prints a value; `{% for %}`, `{% if %}` and `{% elif %}` add logic; filters like `| join(", ")` and `| replace()`. Every value the template uses has to be passed in `render(...)`, or it silently shows nothing. CSS basics: variables in `:root`, `classes`, `table-layout: fixed`, `white-space: nowrap`, a tuple can be one dictionary key made of two values, and splitting logic from display makes code reusable. `try / except FileNotFoundError` for a missing ledger and autoescape protects the page from cross-site scripting (XSS)
+
+**GRC connection:** An accepted risk is still a failing control: the dashboard labels it, doesn’t hide it, and keeps counts honest.
+Exceptions need a scope, like evidence does; an unscoped exception would have wrongly excused the demo repo’s GH-02. The page shows whether its own evidence is trustworthy; when evidence is tampered with, the box warns the reader not to trust what’s below it. No ledger means “unavailable,” never “verified” (can’t verify = error, never pass). Status shown in words, not color alone, for accessibility. Generated output stays out of the repo; the evidence is the record, the page is just a view of it
+
+**Obstacle:** `count_statuses():` keys `"passed"` vs `"pass"`, and a variable named the same as the function
+the exception’s `repository` value was first a full URL, which would never match
+the attach loop first created a `"fail"` key instead of storing the exception, and didn’t check the status
+CSS rules placed above `:root`, and two table rules on one line
+the integrity status used `"ok"` / `"failed"` instead of the template’s exact words
+the new render values went into a second copy of the render block, outside main()
+`groups = ...` lost its indentation. the Markdown preview in Cursor came up blank
