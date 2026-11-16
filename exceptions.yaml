@@ -4,6 +4,7 @@
 exceptions:
   - id: EXC-001
     check_id: GH-02
+    repository: CowboyQueen/grc-evidence-collector
     status: accepted
     scope: Independent approval of pull requests themselves is not enforced.
     risk: Mistakes, insecure code, or unintended changes could reach main without independent review

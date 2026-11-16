@@ -15,8 +15,10 @@ def sha256_of(path):
         return hashlib.sha256(f.read()).hexdigest()
 
 
-def main():
+def verify():
+    """Check the ledger and evidence files. Returns (verified_files, problems)."""
     problems = []
+    verified = []
     seen = {}
     prev = GENESIS
 
@@ -40,20 +42,26 @@ def main():
         elif sha256_of(path) != entry["sha256"]:
             problems.append(f"{name}: FAILED, contents differ from the ledger")
         else:
-            print(f"{name}: OK")
+            verified.append(name)
 
     for name in sorted(os.listdir(EVIDENCE_DIR)):
         if name.endswith(".json") and name not in seen:
             problems.append(f"{name}: not in ledger (unrecorded evidence)")
 
+    return verified, problems
+
+
+def main():
+    verified, problems = verify()
+    for name in verified:
+        print(f"{name}: OK")
     if problems:
         print("\nINTEGRITY PROBLEMS:")
         for p in problems:
             print(f"  - {p}")
         sys.exit(1)
-    print(f"\nAll {len(lines)} ledger entries verified; chain intact.")
+    print(f"\nAll {len(verified)} ledger entries verified; chain intact.")
 
 
 if __name__ == "__main__":
     main()
-    
